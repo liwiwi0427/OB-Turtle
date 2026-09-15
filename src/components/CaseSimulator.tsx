@@ -16,10 +16,13 @@ import {
   Sparkles,
   RotateCcw,
   CheckCircle2,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Lightbulb,
+  Send,
+  AlertTriangle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { ClinicalCase, CasePhase, InteractiveOption, BedsideAction } from '../types/megacode';
+import { ClinicalCase, CasePhase, InteractiveOption, BedsideAction, GuidedQuestion } from '../types/megacode';
 import { CallForHelpPanel } from './CallForHelpPanel';
 
 interface CaseSimulatorProps {
@@ -41,8 +44,15 @@ export const CaseSimulator: React.FC<CaseSimulatorProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'decision' | 'actions' | 'exam' | 'labs'>('decision');
   
-  // Track selected answers per question: { [questionId]: optionId }
-  const [selectedAnswers, setSelectedAnswers] = useState<{ [qId: string]: string }>({});
+  // Track student open-ended reasonings: { [questionId]: string }
+  const [studentReasonings, setStudentReasonings] = useState<{ [qId: string]: string }>({});
+  // Track revealed questions / submitted decisions: { [questionId]: boolean }
+  const [revealedDecisions, setRevealedDecisions] = useState<{ [qId: string]: boolean }>({});
+  // Track clue open state: { [questionId]: boolean }
+  const [showClues, setShowClues] = useState<{ [qId: string]: boolean }>({});
+  // Track self assessments: { [questionId]: 'matched' | 'learning' }
+  const [selfAssessments, setSelfAssessments] = useState<{ [qId: string]: 'matched' | 'learning' }>({});
+
   // Track executed bedside actions: actionId[]
   const [executedActionIds, setExecutedActionIds] = useState<string[]>([]);
   // Feedback popup or message
@@ -58,7 +68,10 @@ export const CaseSimulator: React.FC<CaseSimulatorProps> = ({
 
   // Reset phase-specific states when case changes
   useEffect(() => {
-    setSelectedAnswers({});
+    setStudentReasonings({});
+    setRevealedDecisions({});
+    setShowClues({});
+    setSelfAssessments({});
     setExecutedActionIds([]);
     setLastActionFeedback(null);
     setHasBedsideActionTaken(false);
@@ -67,26 +80,41 @@ export const CaseSimulator: React.FC<CaseSimulatorProps> = ({
 
   const phase: CasePhase = currentCase.phases[currentPhaseIndex] || currentCase.phases[0];
 
-  const handleOptionSelect = (qId: string, opt: InteractiveOption) => {
-    if (selectedAnswers[qId]) return; // already answered
+  const handleSubmitDecision = (qId: string, q: GuidedQuestion) => {
+    if (revealedDecisions[qId]) return;
 
-    setSelectedAnswers(prev => ({ ...prev, [qId]: opt.id }));
-    onScoreDelta(opt.scoreChange);
-    onStabilityDelta(opt.stabilityImpact);
+    setRevealedDecisions(prev => ({ ...prev, [qId]: true }));
+    const correctOpt = q.options.find(o => o.isCorrect) || q.options[0];
 
-    if (opt.isCorrect) {
-      setHasBedsideActionTaken(true);
-      setLatestActionName('臨床鑑別決策制定');
-      try {
-        confetti({
-          particleCount: 40,
-          spread: 60,
-          origin: { y: 0.7 }
-        });
-      } catch (e) {
-        // ignore
-      }
+    onScoreDelta(correctOpt.scoreChange || 25);
+    onStabilityDelta(correctOpt.stabilityImpact || 15);
+
+    setHasBedsideActionTaken(true);
+    setLatestActionName('臨床推理決策制定');
+
+    try {
+      confetti({
+        particleCount: 40,
+        spread: 60,
+        origin: { y: 0.7 }
+      });
+    } catch (e) {}
+  };
+
+  const handleSelfAssess = (qId: string, type: 'matched' | 'learning') => {
+    if (selfAssessments[qId]) return;
+    setSelfAssessments(prev => ({ ...prev, [qId]: type }));
+    if (type === 'matched') {
+      onScoreDelta(10);
     }
+  };
+
+  const handleRevise = (qId: string) => {
+    setRevealedDecisions(prev => ({ ...prev, [qId]: false }));
+  };
+
+  const toggleClue = (qId: string) => {
+    setShowClues(prev => ({ ...prev, [qId]: !prev[qId] }));
   };
 
   const handleExecuteAction = (action: BedsideAction) => {
@@ -330,79 +358,187 @@ export const CaseSimulator: React.FC<CaseSimulatorProps> = ({
 
           {/* Sub-Tab Content Area */}
           <div className="p-4 sm:p-5 flex-1 overflow-y-auto max-h-[520px]">
-            {/* 1. DECISION TAB */}
+            {/* 1. DECISION TAB (海龜湯開放推理模式 - 無選項) */}
             {activeTab === 'decision' && (
-              <div className="space-y-6">
+              <div className="space-y-5">
+                {/* Mode Intro Banner */}
+                <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-950 flex items-start gap-2.5 shadow-sm">
+                  <span className="text-xl shrink-0 mt-0.5">🐢</span>
+                  <div className="flex-1 leading-relaxed">
+                    <span className="font-bold text-emerald-900">「海龜湯」開放式情境推理模式：</span>
+                    <span className="text-emerald-800">
+                      本系統<strong>無提供預設立場的選擇題選項</strong>，請您扮演床邊主治與主責助產團隊，依據產婦當前主訴、胎心監護條帶與即時數據，主動寫下您的臨床推論與決策處置！
+                    </span>
+                  </div>
+                </div>
+
                 {phase.questions.map((q, qIndex) => {
-                  const currentSelected = selectedAnswers[q.id];
+                  const isRevealed = !!revealedDecisions[q.id];
+                  const reasoning = studentReasonings[q.id] || '';
+                  const correctOpt = q.options.find(o => o.isCorrect) || q.options[0];
+                  const wrongOpts = q.options.filter(o => !o.isCorrect);
+                  const isClueOpen = !!showClues[q.id];
+                  const assessment = selfAssessments[q.id];
+
                   return (
-                    <div key={q.id} className="space-y-3">
-                      <div className="flex items-start gap-2">
-                        <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    <div key={q.id} className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm space-y-3.5">
+                      {/* Question Header */}
+                      <div className="flex items-start gap-2.5">
+                        <span className="w-6 h-6 rounded-full bg-rose-100 text-rose-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
                           {qIndex + 1}
                         </span>
-                        <div>
+                        <div className="flex-1">
                           <h4 className="font-bold text-slate-900 text-sm sm:text-base leading-snug">
                             {q.prompt}
                           </h4>
-                          <span className="text-xs text-indigo-600 font-medium inline-block mt-0.5">
-                            🎯 核心學習目標：{q.learningObjective}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                            <span className="text-xs text-indigo-600 font-medium">
+                              🎯 核心學習目標：{q.learningObjective}
+                            </span>
+                            {/* Clue button */}
+                            <button
+                              type="button"
+                              onClick={() => toggleClue(q.id)}
+                              className="text-[11px] text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded border border-amber-200 font-medium transition-colors inline-flex items-center gap-1"
+                            >
+                              <Lightbulb className="w-3 h-3 text-amber-600" />
+                              <span>{isClueOpen ? '收合線索' : '💡 臨床情境線索'}</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Options */}
-                      <div className="space-y-2 pt-1">
-                        {q.options.map((opt) => {
-                          const isChosen = currentSelected === opt.id;
-                          const hasAnswered = !!currentSelected;
+                      {/* Clue Panel (Collapsible) */}
+                      {isClueOpen && (
+                        <div className="bg-amber-50/90 border border-amber-200 rounded-lg p-3 text-xs text-amber-950 space-y-1 animate-in fade-in duration-150">
+                          <div className="font-bold flex items-center gap-1 text-amber-800">
+                            <Lightbulb className="w-3.5 h-3.5 text-amber-600" />
+                            <span>🔍 海龜湯情境線索提示：</span>
+                          </div>
+                          <p className="leading-relaxed text-amber-900">
+                            {q.clinicalClue || '仔細比對產婦當前生命徵象（血壓、心率、呼吸）、宮縮張力與胎兒監護條帶（變異度、減速型態）。思考哪些介入應列為最高優先（給氧、姿勢、停藥、降壓或備刀）。'}
+                          </p>
+                        </div>
+                      )}
 
-                          let btnStyle = 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-800';
-                          if (hasAnswered) {
-                            if (opt.isCorrect) {
-                              btnStyle = 'border-emerald-500 bg-emerald-50 text-emerald-950 font-medium ring-1 ring-emerald-400';
-                            } else if (isChosen && !opt.isCorrect) {
-                              btnStyle = 'border-rose-500 bg-rose-50 text-rose-950';
-                            } else {
-                              btnStyle = 'border-slate-100 text-slate-400 opacity-60';
-                            }
-                          }
+                      {/* Reasoning Input Area (No options!) */}
+                      {!isRevealed ? (
+                        <div className="space-y-2.5 pt-1">
+                          <div className="relative">
+                            <textarea
+                              rows={3}
+                              value={reasoning}
+                              onChange={(e) => setStudentReasonings(prev => ({ ...prev, [q.id]: e.target.value }))}
+                              placeholder="請在此輸入您的臨床鑑別診斷、推論依據或擬定之處置處方（無選項限制，依臨床判斷自由作答）..."
+                              className="w-full text-xs sm:text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-slate-800 placeholder:text-slate-400 leading-relaxed outline-none"
+                            />
+                          </div>
 
-                          return (
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="text-[11px] text-slate-500">
+                              {reasoning.trim().length > 0 ? `已輸入 ${reasoning.trim().length} 字` : '自主思考後，點擊右方按鈕揭曉海龜湯臨床解答'}
+                            </span>
+
                             <button
-                              key={opt.id}
-                              disabled={hasAnswered}
-                              onClick={() => handleOptionSelect(q.id, opt)}
-                              className={`w-full text-left p-3 rounded-xl border text-xs sm:text-sm transition-all flex items-start gap-2.5 ${btnStyle}`}
+                              type="button"
+                              onClick={() => handleSubmitDecision(q.id, q)}
+                              className="px-4 py-2 rounded-lg bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1.5 active:scale-95 ml-auto"
                             >
-                              <div className="mt-0.5 shrink-0">
-                                {hasAnswered ? (
-                                  opt.isCorrect ? (
-                                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                                  ) : isChosen ? (
-                                    <XCircle className="w-4 h-4 text-rose-600" />
-                                  ) : (
-                                    <div className="w-4 h-4 rounded-full border border-slate-300" />
-                                  )
-                                ) : (
-                                  <div className="w-4 h-4 rounded-full border-2 border-slate-400" />
-                                )}
-                              </div>
-                              <div className="flex-1">
-                                <p>{opt.text}</p>
-                                {hasAnswered && isChosen && (
-                                  <div className="mt-2 pt-2 border-t border-slate-200/60 text-xs">
-                                    <span className={`font-bold ${opt.isCorrect ? 'text-emerald-700' : 'text-rose-700'}`}>
-                                      {opt.isCorrect ? '✅ 決策正確！' : '❌ 臨床處置警訊：'}
-                                    </span>{' '}
-                                    <span className="text-slate-700">{opt.explanation}</span>
-                                  </div>
-                                )}
-                              </div>
+                              <Send className="w-3.5 h-3.5" />
+                              <span>{reasoning.trim().length > 0 ? '提交推論並揭曉解答' : '直接揭曉標準解答'}</span>
                             </button>
-                          );
-                        })}
-                      </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Revealed Feedback & Model Answer Area */
+                        <div className="space-y-3 pt-1 animate-in fade-in duration-200">
+                          {/* Student's submitted reasoning */}
+                          {reasoning.trim() && (
+                            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700">
+                              <div className="font-semibold text-slate-500 text-[10px] uppercase mb-0.5">
+                                您的臨床推論思考紀錄：
+                              </div>
+                              <p className="italic text-slate-800 leading-relaxed">{reasoning}</p>
+                            </div>
+                          )}
+
+                          {/* Gold Standard / Model Decision (The Soup Base) */}
+                          <div className="p-3.5 rounded-xl bg-emerald-50/90 border border-emerald-300 text-emerald-950 space-y-2 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                <span>🐢 海龜湯湯底 • 專家標準臨床決策：</span>
+                              </span>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-900 border border-emerald-300">
+                                權威處置標準
+                              </span>
+                            </div>
+                            <p className="text-xs sm:text-sm font-semibold text-emerald-950 leading-relaxed">
+                              {correctOpt.text}
+                            </p>
+                            <div className="pt-2 border-t border-emerald-200 text-xs text-emerald-900 leading-relaxed">
+                              <strong className="font-bold text-emerald-800">臨床實證與病理詳解：</strong>
+                              <span>{correctOpt.explanation}</span>
+                            </div>
+                          </div>
+
+                          {/* Critical Clinical Pitfalls / Distractors (What to avoid) */}
+                          {wrongOpts.length > 0 && (
+                            <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-200 text-xs text-rose-950 space-y-2">
+                              <div className="font-bold text-rose-800 flex items-center gap-1.5 text-[11px]">
+                                <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                                <span>產科臨床常見致命盲點與處置禁忌：</span>
+                              </div>
+                              <div className="space-y-1.5 pl-1">
+                                {wrongOpts.map((w) => (
+                                  <div key={w.id} className="text-[11px] text-slate-700 border-l-2 border-rose-300 pl-2 leading-relaxed">
+                                    <span className="font-semibold text-rose-700">❌ 禁忌/誤區：</span>
+                                    <span>{w.text}</span>
+                                    <div className="text-slate-500 text-[10px] mt-0.5">{w.explanation}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Self-Assessment Reflection */}
+                          <div className="pt-1 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold text-slate-600">思維反思：</span>
+                              <button
+                                type="button"
+                                onClick={() => handleSelfAssess(q.id, 'matched')}
+                                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+                                  assessment === 'matched'
+                                    ? 'bg-emerald-600 text-white shadow-sm'
+                                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
+                                }`}
+                              >
+                                <span>🎯 與專家決策相符 (+10分)</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSelfAssess(q.id, 'learning')}
+                                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+                                  assessment === 'learning'
+                                    ? 'bg-indigo-600 text-white shadow-sm'
+                                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
+                                }`}
+                              >
+                                <span>💡 釐清盲點，學習到了</span>
+                              </button>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRevise(q.id)}
+                              className="text-[11px] text-slate-400 hover:text-slate-600 underline ml-auto"
+                            >
+                              修改我的推論
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

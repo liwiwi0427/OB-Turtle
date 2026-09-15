@@ -76,7 +76,7 @@ export const WelcomeTutorialModal: React.FC<WelcomeTutorialModalProps> = ({
       title: '難度分級篩選與 8+1 大高危急症教案',
       icon: Stethoscope,
       iconColor: 'text-rose-500 bg-rose-50 border-rose-200',
-      description: '系統完整收錄 9 大 ChatGPT 共享源產科急症教案，包含妊娠高血壓、重度子癲前症、催產素過度刺激、胎盤早期剝離、完全性前置胎盤、羊水栓塞 (AFE) 及 4T 產後大出血專題。',
+      description: '系統完整收錄 9 大臨床權威產科急症核心教案，包含妊娠高血壓、重度子癲前症、催產素過度刺激、胎盤早期剝離、完全性前置胎盤、羊水栓塞 (AFE) 及 4T 產後大出血專題。',
       highlights: [
         { dot: '🟢', label: '初級 (Beginner)', detail: '催產素引產監控、妊娠糖尿病控制（適合基礎臨床學習）' },
         { dot: '🔵', label: '中級 (Intermediate)', detail: '子癲前症降壓、子癲抽搐 MgSO₄ 搶救、前置胎盤無痛出血' },
@@ -137,7 +137,7 @@ export const WelcomeTutorialModal: React.FC<WelcomeTutorialModalProps> = ({
         { dot: '👨‍🏫', label: '導師控場站 (Teacher)', detail: '突發危機注入器（可注入抽搐、DIC等）、OSCE 5 站示範標準話術' },
         { dot: '🩸', label: '4T 產後大出血專題', detail: 'Tone, Trauma, Tissue, Thrombin 鑑別、休克指數 (SI) 與 QBL 計算器' },
         { dot: '⚡', label: '課堂互動競答 (Quiz)', detail: '10 大產科致命考點實戰答題，附臨床精華 (Clinical Pearls)' },
-        { dot: '📖', label: '原始教案庫 (Archives)', detail: '完整閱讀與一鍵複製 ChatGPT 原始教案全文' }
+        { dot: '📖', label: '原始教案庫 (Archives)', detail: '完整閱讀與一鍵複製標準臨床教案全文' }
       ],
       tip: '可透過頂部導覽列隨時切換不同模組，體驗全方位的產科急症模擬！'
     }

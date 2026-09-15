@@ -52,7 +52,7 @@ export const RawArchiveViewer: React.FC = () => {
                 RAW CLINICAL CASE ARCHIVES
               </span>
               <h2 className="text-lg sm:text-xl font-bold text-white mt-0.5">
-                ChatGPT 共享源 9大案例完整文字庫
+                產科急症 9大教案標準臨床指引全庫
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
                 完整保留原始臨床分期、引導問題、教師版臨床推理、OSCE 考站話術與病理機轉延伸討論

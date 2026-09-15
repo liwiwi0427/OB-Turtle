@@ -235,7 +235,7 @@ export default function App() {
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 text-xs py-4 px-6 text-center">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <span>MEGACODE 產科急症高擬真互動教學系統 • 依據 ChatGPT 原生提取教案</span>
+          <span>海龜湯—產科版 • 產科急症高擬真情境推理教學系統</span>
           <span className="text-slate-500">NICHD Guidelines • ACOG PPH Bundle • AFE Foundation Consensus</span>
         </div>
       </footer>
