@@ -402,8 +402,7 @@ export const CallForHelpPanel: React.FC<CallForHelpPanelProps> = ({
                   跨專科團隊已全數抵達！高度肯定現場第一時間的床邊穩定處置！
                 </h4>
                 <p className="text-xs text-emerald-800/90 mt-1 leading-relaxed max-w-3xl">
-                  <strong>【跨領域合作典範】</strong>在團隊奔赴現場的 60 秒內，您成功執行了床邊關鍵復甦與穩定措施，避免了母胎缺氧惡化。
-                  目前產婦由婦產科部醫療團隊接手，新生兒將由兒科部醫療團隊接手，你做的不錯⋯也沒有被文屏姐罵！
+                  <strong>【跨領域合作典範】</strong>在團隊奔赴現場的 60 秒內，您成功執行了床邊關鍵復甦與穩定措施，避免了母胎缺氧惡化！目前產婦由婦產科部醫療團隊接手，新生兒將由兒科部醫療團隊接手，你做的不錯⋯也沒有被文屏姐罵！
                 </p>
               </div>
             </div>
