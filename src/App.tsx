@@ -15,6 +15,8 @@ import { RawArchiveViewer } from './components/RawArchiveViewer';
 import { WelcomeTutorialModal } from './components/WelcomeTutorialModal';
 import { ALL_CLINICAL_CASES } from './data/cases';
 import { ClinicalCase, TeacherInjection, VitalsData } from './types/megacode';
+import { realtimeSync } from './services/realtimeSync';
+import { Flame, Radio, ArrowRight, X } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'simulator' | 'teacher' | 'pph' | 'quiz' | 'archive'>('simulator');
@@ -30,6 +32,14 @@ export default function App() {
   // Teacher crisis injection
   const [activeCrisis, setActiveCrisis] = useState<TeacherInjection | null>(null);
 
+  // Cross-device synchronization state
+  const [syncStatus, setSyncStatus] = useState<'connected' | 'reconnecting' | 'polling'>('connected');
+  const [remoteCrisisAlert, setRemoteCrisisAlert] = useState<{
+    crisis: TeacherInjection;
+    caseId: string | null;
+    isDismissed: boolean;
+  } | null>(null);
+
   // Welcome tutorial popup for first-time visitors
   const [showTutorialModal, setShowTutorialModal] = useState<boolean>(() => {
     try {
@@ -40,18 +50,52 @@ export default function App() {
   });
   const [tutorialDirectStart, setTutorialDirectStart] = useState<boolean>(false);
 
+  // Real-time synchronization subscription
+  useEffect(() => {
+    const unsubConn = realtimeSync.subscribeConnection((status) => {
+      setSyncStatus(status);
+    });
+
+    const unsubCrisis = realtimeSync.subscribe((payload) => {
+      if (payload.activeCrisis) {
+        setActiveCrisis(payload.activeCrisis);
+        setStability(prev => Math.max(25, prev - 25));
+        setRemoteCrisisAlert({
+          crisis: payload.activeCrisis,
+          caseId: payload.caseId,
+          isDismissed: false
+        });
+
+        // Trigger dramatic emergency alarm sound across all listening devices
+        playTone(330, 'square', 0.3);
+        setTimeout(() => playTone(293.66, 'square', 0.4), 250);
+      } else {
+        setActiveCrisis(null);
+        setRemoteCrisisAlert(null);
+      }
+    });
+
+    return () => {
+      unsubConn();
+      unsubCrisis();
+    };
+  }, []);
+
   // Get current case
   const currentCase: ClinicalCase = useMemo(() => {
     return ALL_CLINICAL_CASES.find(c => c.id === selectedCaseId) || ALL_CLINICAL_CASES[0];
   }, [selectedCaseId]);
 
-  // Derive current vitals (override if teacher injected a crisis)
+  // Derive current vitals (override immediately if teacher injected a crisis on any device)
   const currentVitals: VitalsData = useMemo(() => {
     const basePhase = currentCase.phases[currentPhaseIndex] || currentCase.phases[0];
-    if (activeCrisis && activeCrisis.modifiedVitals) {
+    const overrides = activeCrisis 
+      ? (activeCrisis.vitalsOverride || (activeCrisis as any).modifiedVitals) 
+      : null;
+    if (overrides) {
       return {
         ...basePhase.vitals,
-        ...activeCrisis.modifiedVitals
+        ...overrides
       };
     }
     return basePhase.vitals;
@@ -99,14 +143,12 @@ export default function App() {
   const handleSelectCase = (caseId: string) => {
     setSelectedCaseId(caseId);
     setCurrentPhaseIndex(0);
-    setActiveCrisis(null);
     setStability(80);
     playTone(440, 'sine', 0.1);
   };
 
   const handleResetCase = () => {
     setCurrentPhaseIndex(0);
-    setActiveCrisis(null);
     setStability(85);
     playTone(392, 'sine', 0.15);
   };
@@ -125,15 +167,19 @@ export default function App() {
   const handleInjectCrisis = (injection: TeacherInjection) => {
     setActiveCrisis(injection);
     setStability(prev => Math.max(25, prev - 25));
-    // Dramatic emergency buzzer
     playTone(330, 'square', 0.3);
     setTimeout(() => playTone(293.66, 'square', 0.4), 250);
+    // Real-time broadcast to all other devices & server persistence
+    realtimeSync.injectCrisis(injection, selectedCaseId);
   };
 
   const handleClearCrisis = () => {
     setActiveCrisis(null);
+    setRemoteCrisisAlert(null);
     setStability(prev => Math.min(100, prev + 15));
     playTone(523.25, 'sine', 0.2);
+    // Broadcast clear to all other devices & server
+    realtimeSync.clearCrisis();
   };
 
   return (
@@ -152,10 +198,72 @@ export default function App() {
           setShowTutorialModal(true);
         }}
         currentCaseTitle={currentCase.title}
+        syncStatus={syncStatus}
+        activeCrisisTitle={activeCrisis?.title}
       />
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+        {/* Cross-device Real-time Crisis Injection Alert Banner */}
+        {remoteCrisisAlert && !remoteCrisisAlert.isDismissed && (
+          <div className="mb-5 p-4 rounded-xl bg-gradient-to-r from-rose-900 via-red-800 to-rose-950 text-white shadow-xl border border-rose-500 ring-2 ring-rose-400/50 animate-in fade-in duration-300">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 rounded-xl bg-rose-700/80 text-white shrink-0 mt-0.5 animate-bounce shadow-md">
+                  <Flame className="w-6 h-6 text-amber-300" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-500 text-white uppercase tracking-wider shadow-sm flex items-center gap-1">
+                      <Radio className="w-3 h-3 animate-pulse" />
+                      跨裝置即時突發危象注入
+                    </span>
+                    <span className="text-xs text-rose-200">
+                      來源：導師控場站即時廣播 • 生命徵象已同步惡化
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-base sm:text-lg text-white mt-1">
+                    {remoteCrisisAlert.crisis.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-rose-100/90 mt-0.5 max-w-2xl leading-relaxed">
+                    {remoteCrisisAlert.crisis.description}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 ml-auto">
+                {remoteCrisisAlert.caseId && remoteCrisisAlert.caseId !== selectedCaseId && (
+                  <button
+                    onClick={() => {
+                      setSelectedCaseId(remoteCrisisAlert.caseId!);
+                      setActiveTab('simulator');
+                    }}
+                    className="px-4 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md transition-all active:scale-95"
+                  >
+                    <span>立即切換至此案例搶救</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                )}
+                {activeTab !== 'teacher' && (
+                  <button
+                    onClick={() => setActiveTab('teacher')}
+                    className="px-3.5 py-2 rounded-lg bg-rose-800/80 hover:bg-rose-700 text-white font-semibold text-xs transition-all"
+                  >
+                    查看導師解題
+                  </button>
+                )}
+                <button
+                  onClick={() => setRemoteCrisisAlert(prev => prev ? { ...prev, isDismissed: true } : null)}
+                  className="p-1.5 rounded-lg hover:bg-rose-800/80 text-rose-300 hover:text-white transition-colors"
+                  title="收合橫幅"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* TAB 1: STUDENT SIMULATOR */}
         {activeTab === 'simulator' && (
           <div>
@@ -212,6 +320,7 @@ export default function App() {
               onInjectCrisis={handleInjectCrisis}
               activeCrisis={activeCrisis}
               onClearCrisis={handleClearCrisis}
+              syncStatus={syncStatus}
             />
           </div>
         )}

@@ -12,7 +12,8 @@ import {
   Network,
   Sparkles,
   Zap,
-  ArrowRight
+  ArrowRight,
+  Radio
 } from 'lucide-react';
 import { ClinicalCase, TeacherInjection, OSCEStation } from '../types/megacode';
 
@@ -21,13 +22,15 @@ interface TeacherStationProps {
   onInjectCrisis: (injection: TeacherInjection) => void;
   activeCrisis: TeacherInjection | null;
   onClearCrisis: () => void;
+  syncStatus?: 'connected' | 'reconnecting' | 'polling';
 }
 
 export const TeacherStation: React.FC<TeacherStationProps> = ({
   currentCase,
   onInjectCrisis,
   activeCrisis,
-  onClearCrisis
+  onClearCrisis,
+  syncStatus = 'connected'
 }) => {
   const [activeSection, setActiveSection] = useState<'reasoning' | 'osce' | 'injections' | 'takeaways'>('reasoning');
   const [revealedModelAnswers, setRevealedModelAnswers] = useState<{ [stationNum: number]: boolean }>({});
@@ -255,22 +258,28 @@ export const TeacherStation: React.FC<TeacherStationProps> = ({
       {/* 2. CRISIS INJECTIONS */}
       {activeSection === 'injections' && (
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Flame className="w-5 h-5 text-rose-600" />
-                <span>導師突發危機注入控制台 (Crisis Event Injector)</span>
-              </h3>
-              <p className="text-xs text-slate-500 mt-1">
-                導師可按下「注入」按鈕，立即覆寫學生的床邊生命徵象監視器，製造突發急症逼真情境！
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Flame className="w-5 h-5 text-rose-600" />
+                  <span>導師突發危機注入控制台 (Crisis Event Injector)</span>
+                </h3>
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <Radio className="w-3 h-3 text-emerald-600 animate-pulse" />
+                  <span>已啟動跨裝置實時同步</span>
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 mt-1">
+                導師在一台裝置（如手機、iPad 或教師電腦）按下「立即注入此危象」，所有學生裝置與監視螢幕將<strong>毫秒級實時同步</strong>突發急症與警報！
               </p>
             </div>
             {activeCrisis && (
               <button
                 onClick={onClearCrisis}
-                className="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold"
+                className="px-3.5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all active:scale-95"
               >
-                解除當前危象
+                <span>解除當前危象 (所有裝置同步復原)</span>
               </button>
             )}
           </div>

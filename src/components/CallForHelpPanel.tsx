@@ -273,36 +273,36 @@ export const CallForHelpPanel: React.FC<CallForHelpPanelProps> = ({
             <div className="p-2 rounded-lg bg-white border border-slate-200 flex items-center gap-2">
               <span>👨‍⚕️</span>
               <div className="truncate">
-                <div className="font-bold text-slate-800">產科主治醫師</div>
-                <div className="text-amber-600 text-[10px] font-medium">奔赴產房中...</div>
+                <div className="font-bold text-slate-800">主治醫師與文屏姐</div>
+                <div className="text-amber-600 text-[10px] font-medium">正在趕來的路上...</div>
               </div>
             </div>
             <div className="p-2 rounded-lg bg-white border border-slate-200 flex items-center gap-2">
               <span>💉</span>
               <div className="truncate">
-                <div className="font-bold text-slate-800">麻醉科專科</div>
-                <div className="text-amber-600 text-[10px] font-medium">備氣道與藥物...</div>
+                <div className="font-bold text-slate-800">麻醉科Duty</div>
+                <div className="text-amber-600 text-[10px] font-medium">準備麻醉、建立呼吸道與Time Out...</div>
               </div>
             </div>
             <div className="p-2 rounded-lg bg-white border border-slate-200 flex items-center gap-2">
               <span>👶</span>
               <div className="truncate">
-                <div className="font-bold text-slate-800">新生兒加護 NICU</div>
-                <div className="text-amber-600 text-[10px] font-medium">復甦設備推移中...</div>
+                <div className="font-bold text-slate-800">兒科團隊與SBR</div>
+                <div className="text-amber-600 text-[10px] font-medium">已聯絡，準備中...</div>
               </div>
             </div>
             <div className="p-2 rounded-lg bg-white border border-slate-200 flex items-center gap-2">
               <span>🩸</span>
               <div className="truncate">
-                <div className="font-bold text-slate-800">血庫中心</div>
-                <div className="text-amber-600 text-[10px] font-medium">備血與 MTP 待命...</div>
+                <div className="font-bold text-slate-800">血庫</div>
+                <div className="text-amber-600 text-[10px] font-medium">備血、交叉試驗中...</div>
               </div>
             </div>
             <div className="p-2 rounded-lg bg-white border border-slate-200 flex items-center gap-2 col-span-2 sm:col-span-1">
               <span>🏥</span>
               <div className="truncate">
-                <div className="font-bold text-slate-800">急診手術室</div>
-                <div className="text-amber-600 text-[10px] font-medium">急診刀房已清空...</div>
+                <div className="font-bold text-slate-800">開刀房</div>
+                <div className="text-amber-600 text-[10px] font-medium">刀房可接刀...</div>
               </div>
             </div>
           </div>

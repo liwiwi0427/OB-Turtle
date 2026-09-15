@@ -10,7 +10,9 @@ import {
   BookOpen,
   Award,
   Zap,
-  HelpCircle
+  HelpCircle,
+  Radio,
+  Flame
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -23,6 +25,8 @@ interface HeaderProps {
   onResetCase: () => void;
   onOpenTutorial?: () => void;
   currentCaseTitle?: string;
+  syncStatus?: 'connected' | 'reconnecting' | 'polling';
+  activeCrisisTitle?: string | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -34,7 +38,9 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleSound,
   onResetCase,
   onOpenTutorial,
-  currentCaseTitle
+  currentCaseTitle,
+  syncStatus = 'connected',
+  activeCrisisTitle
 }) => {
   // Stability color & status
   const getStabilityBadge = (val: number) => {
@@ -73,7 +79,48 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Live Metrics & Controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          {/* Real-time Cross-device Sync Indicator */}
+          <div 
+            title={
+              syncStatus === 'connected' 
+                ? '跨裝置即時同步連線正常 (WebSocket 已建立)' 
+                : syncStatus === 'polling' 
+                ? '跨裝置同步運行中 (HTTP 雙向輪巡)' 
+                : '連線建立中...'
+            }
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs transition-all ${
+              activeCrisisTitle
+                ? 'bg-rose-950/90 text-rose-200 border-rose-500 animate-pulse font-bold'
+                : syncStatus === 'connected'
+                ? 'bg-emerald-950/70 text-emerald-300 border-emerald-700/60'
+                : 'bg-cyan-950/70 text-cyan-300 border-cyan-700/60'
+            }`}
+          >
+            {activeCrisisTitle ? (
+              <>
+                <Flame className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
+                <span className="hidden sm:inline">危象同步中: {activeCrisisTitle}</span>
+                <span className="sm:hidden">危象注入中</span>
+              </>
+            ) : (
+              <>
+                <span className="relative flex h-2 w-2">
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                    syncStatus === 'connected' ? 'bg-emerald-400' : 'bg-cyan-400'
+                  }`} />
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                    syncStatus === 'connected' ? 'bg-emerald-500' : 'bg-cyan-500'
+                  }`} />
+                </span>
+                <Radio className="w-3.5 h-3.5 text-slate-300" />
+                <span className="hidden md:inline font-medium">
+                  {syncStatus === 'connected' ? '跨裝置同步在線' : '同步輪巡中'}
+                </span>
+              </>
+            )}
+          </div>
+
           {/* Stability Indicator */}
           <div className="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
             <Activity className="w-4 h-4 text-rose-400 animate-pulse" />
