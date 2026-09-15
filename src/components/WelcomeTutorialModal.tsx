@@ -152,20 +152,20 @@ export const WelcomeTutorialModal: React.FC<WelcomeTutorialModalProps> = ({
         {/* ================= VIEW 1: PROMPT DIALOG ================= */}
         {view === 'prompt' && (
           <div className="p-6 sm:p-8 flex flex-col items-center text-center">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-rose-500 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-rose-200 mb-4">
-              <Sparkles className="w-8 h-8" />
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-rose-600 text-white flex items-center justify-center shadow-lg shadow-emerald-200 mb-4 text-3xl">
+              🐢
             </div>
 
-            <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-200 mb-2">
-              MEGACODE OB-GYN SIMULATION
+            <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 mb-2">
+              TURTLE SOUP • 產科急症推理
             </span>
 
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 mb-2 tracking-tight">
-              歡迎使用產科急症高擬真教學系統
+              歡迎來到「海龜湯—產科版」
             </h2>
 
             <p className="text-sm text-slate-600 leading-relaxed mb-6 max-w-md">
-              本系統依據真實產科急症規範設計，包含<strong>高擬真生理監視器</strong>、<strong>難度分級教案</strong>、<strong>『呼叫支援』團隊動員倒數</strong>與<strong>四階臨床推導</strong>。
+              以海龜湯情境推理結合產科臨床真實規範，包含<strong>高擬真生理監視器</strong>、<strong>難度分級教案</strong>、<strong>『呼叫支援』團隊動員倒數</strong>與<strong>四階臨床思維推導</strong>。
               <br /><br />
               請問您是否需要簡要的<strong>系統操作導覽與教學說明</strong>？
             </p>

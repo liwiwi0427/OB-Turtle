@@ -51,18 +51,18 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
         {/* Logo & Title */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-600 to-indigo-600 flex items-center justify-center shadow-inner">
-            <Heart className="w-5 h-5 text-white fill-white/80" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-rose-600 flex items-center justify-center shadow-inner text-xl">
+            🐢
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                MEGACODE OB-GYN
+              <span className="text-xs font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                TURTLE SOUP • OB-GYN
               </span>
-              <span className="text-xs text-slate-400 hidden sm:inline">產科急症高擬真教學</span>
+              <span className="text-xs text-slate-400 hidden sm:inline">產科急症臨床推理</span>
             </div>
             <h1 className="text-base sm:text-lg font-bold text-slate-100 tracking-tight flex items-center gap-2">
-              產科急症互動遊戲式教學系統
+              海龜湯—產科版
               {currentCaseTitle && (
                 <span className="text-xs font-normal text-slate-400 hidden lg:inline max-w-xs truncate">
                   • {currentCaseTitle}
