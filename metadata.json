@@ -1,0 +1,6 @@
+{
+  "name": "MEGACODE 產科急症互動遊戲式教學系統",
+  "description": "產科急症與臨床推理 MEGACODE 師生互動遊戲化教學系統，涵蓋胎兒窘迫、子癲前症、胎盤早剝、前置胎盤、羊水栓塞與 4T 產後出血臨床模擬、即時生理監視器、教師危機注入與 OSCE 即時回饋機制。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
